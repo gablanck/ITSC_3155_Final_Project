@@ -1,0 +1,145 @@
+{% extends 'schedules/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Pending Requests -->
+    <h3>Pending Requests</h3>
+    <div class="row">
+        <!-- Connection Requests -->
+        {% for request in received_requests %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Connection Request</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">From: {{ request.sender.username }}</h6>
+                    <p class="card-text">{{ request.sender.email }}</p>
+                    <p class="card-text"><small class="text-muted">Requested on: {{ request.created_at|date }}</small></p>
+                    <form method="POST" action="{% url 'process_connection_request' request.id 'accept' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Accept</button>
+                    </form>
+                    <form method="POST" action="{% url 'process_connection_request' request.id 'reject' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Group Invitations -->
+        {% for invite in pending_group_invitations %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Group Invitation</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Group: {{ invite.group.name }}</h6>
+                    <p class="card-text">Invited by: {{ invite.invited_by.username }}</p>
+                    <p class="card-text"><small class="text-muted">Invited on: {{ invite.invited_at|date }}</small></p>
+                    <form method="post" action="{% url 'group_accept_invite' invite.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-success" type="submit">Accept</button>
+                    </form>
+                    <form method="post" action="{% url 'group_decline_invite' invite.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit">Decline</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not received_requests and not pending_group_invitations %}
+        <div class="col-12">
+            <p>You have no pending requests or invitations.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Divider and Two Column Layout -->
+    <hr>
+    <div class="row">
+        <!-- Left: Current Connections -->
+        <div class="col-md-6 border-end">
+            <h3>Current Connections</h3>
+            
+            {% for connection in connections %}
+            <div class="card-connection card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ connection.connected_to.username }}</h5>
+                    <p class="card-text">{{ connection.connected_to.email }}</p>
+                    <p class="card-text"><small class="text-muted">Connected since: {{ connection.created_at|date }}</small></p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <form method="POST" action="{% url 'disconnect_user' connection.connected_to.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Disconnect</button>
+                        </form>
+                        <form method="POST" action="{% url 'toggle_schedule_sharing' connection.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="share_schedule" 
+                                       {% if connection.share_schedule %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="form-check-label">See Schedule</label>
+                            </div>
+                        </form>
+                        <a href="{% url 'view_user_profile' connection.connected_to.id %}" class="btn btn-outline-primary btn-sm">See Profile</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p>You haven't connected with any users yet.</p>
+            <a href="{% url 'user_search' %}" class="btn btn-primary">Find Users</a>
+            {% endfor %}
+        </div>
+
+        <!-- Right: Group Connections -->
+        <div class="col-md-6">
+            <h3>Group Connections</h3>
+            
+            <!-- Current Groups -->
+            {% if groups %}
+                <div class="list-group">
+                    {% for group in groups %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">{{ group.name }}</h6>
+                            {% if group.creator.id == user.id %}
+                                <span class="badge bg-success">Admin</span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="mb-2 small">{{ group.description|truncatechars:100 }}</p>
+                        <div class="mb-2">
+                            <h6 class="mb-1">Members:</h6>
+                            <div class="d-flex flex-wrap">
+                                {% for membership in group.memberships.all %}
+                                    <span class="badge bg-secondary me-1 mb-1">
+                                        {{ membership.user.username }}
+                                        {% if membership.is_admin %}
+                                            <small>(Admin)</small>
+                                        {% endif %}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <form method="post" action="{% url 'leave_group' group.id %}" 
+                                  onsubmit="return confirm('Are you sure you want to leave this group?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Leave Group</button>
+                            </form>
+                          
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>You are not a member of any groups yet.</p>
+                <a href="{% url 'group_create' %}" class="btn btn-primary btn-sm">Create a Group</a>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

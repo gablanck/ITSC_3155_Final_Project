@@ -1,0 +1,407 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ScheduleApp{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #6d8996, #e0f7fa);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    .navbar {
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand, .navbar-nav .nav-link {
+      color: #fff !important;
+    }
+
+    .navbar-nav .nav-link:hover {
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+
+    .container {
+      margin-top: 30px;
+    }
+
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  
+    }
+  .card-body {
+    border-radius: 15px;
+  }
+.list-group {
+  margin-bottom: 20px;
+  border-radius: 15px;
+}
+.list-group-item:not(:last-child) {
+  margin-bottom: 20px; /
+}
+    .card-connection {
+      display: flex;
+    flex-direction: row;
+
+    }
+     .connection-request {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    } 
+
+    footer {
+      background-color: #ffffffcc;
+      padding: 10px 0;
+      position: fixed;
+      text-align: left;
+        left: 0;
+      bottom: 0;
+      width: 100%;
+      font-size: 0.9em;
+      color: #444;
+      z-index: 69;
+    }
+
+    .btn-primary {
+        background-color: #00bcd4;
+        border-color: #00bcd4;
+        }
+
+    .ai-button {
+      background-color: #00acc1;
+        border-color: #060b18;
+        border-width: 3px;
+        font-size: 50px;
+    }
+
+    .btn-primary:hover {
+        background-color: #00acc1;
+        border-color: #00acc1;
+    }
+
+    .btn-outline-secondary {
+      border-color: #00c140;
+    }
+
+    .btn-danger {
+      background-color: #e74c3c;
+      border-color: #e74c3c;
+    }
+
+    .btn-danger:hover {
+      background-color: #c0392b;
+      border-color: #c0392b;
+    }
+
+    .suggestion-block {
+      background-color: #f0f8ff;
+      padding: 12px;
+      border-left: 4px solid #4a90e2;
+      margin: 8px 0;
+      border-radius: 8px;
+    }
+    .suggestion-block h4 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'home' %}">📅 ScheduleApp</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'schedule' %}">Calendar</a></li>
+
+          {% if user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'user_search' %}">Find Users</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'my_connections' %}">My Connections</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">Profile</a></li>
+            <li class="nav-item">
+              <form id="logout-form" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-link">Logout</button>
+              </form>
+            </li>            
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="position-fixed" style="top: 80px; right: 20px; z-index: 1060;">
+    <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle" id="notifBell" data-bs-toggle="dropdown">
+        🔔 <span class="badge bg-danger" id="notifCount">0</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" id="notifList">
+        <li><span class="dropdown-item-text text-muted">No notifications</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="aiChatButton" style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
+    <button class="btn btn-primary rounded-circle p-3 ai-button" title="Ask the Assistant">
+      🤖<i class="bi bi-chat-dots"></i>
+    </button>
+  </div>
+  <div id="aiChatBox" class="card shadow-lg border-0" style="position: fixed; bottom: 80px; right: 20px; width: 400px; display: none; z-index: 1051;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>AI Assistant 🤖</strong>
+      <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('aiChatBox').style.display='none'"></button>
+    </div>
+    <div class="card-body">
+      <div class="mb-2">
+        <textarea class="form-control" id="aiQuestion" rows="3" placeholder="e.g., What events do I have this week?"></textarea>
+      </div>
+      <button class="btn btn-primary w-100" id="askAIButton">Ask</button>
+      <div id="aiResponse" class="mt-3 small text-dark" style="white-space: pre-wrap;"></div>
+    </div>
+  </div>
+
+  <footer class="text-center">
+    <p>&copy; 2025 ScheduleApp | Built with 💙 and Django</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + "=")) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  
+    function showToast(message) {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+  
+      toast.className = "toast align-items-center text-bg-primary border-0 show mb-2";
+      toast.setAttribute("role", "alert");
+      toast.setAttribute("aria-live", "assertive");
+      toast.setAttribute("aria-atomic", "true");
+  
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+  
+      container.appendChild(toast);
+  
+      const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+      bsToast.show();
+  
+      toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+      });
+    }
+  
+    function loadNotifications() {
+      fetch("/schedules/notifications/")
+        .then(response => response.json())
+        .then(data => {
+          const notifList = document.getElementById("notifList");
+          const notifCount = document.getElementById("notifCount");
+          const visibleNotifications = data.notifications.filter(n => !n.snoozed);
+          notifList.innerHTML = "";
+  
+          if (data.notifications.length > 0) {
+            notifCount.innerText = data.notifications.length;
+  
+            visibleNotifications.forEach(n => {
+              const li = document.createElement("li");
+              li.classList.add("dropdown-item", "d-flex", "justify-content-between", "align-items-center");
+
+              const messageWrapper = document.createElement("div");
+              messageWrapper.classList.add("d-flex", "justify-content-between", "align-items-center", "w-100");
+  
+              const message = document.createElement("span");
+
+              if (n.snoozed) {
+                message.innerText = `${n.message}`;
+              } else {
+                message.innerText = n.message;
+              }
+              message.classList.add("flex-grow-1");
+  
+              const markBtn = document.createElement("button");
+              markBtn.className = "btn btn-sm btn-outline-secondary";
+              markBtn.innerText = "✅";
+              markBtn.onclick = () => {
+                fetch(`/schedules/notifications/mark_read/${n.id}/`, {
+                  method: "POST",
+                  headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                  },
+                }).then(() => {
+                  li.remove();
+                  notifCount.innerText = notifList.children.length;
+                });
+              };
+
+              const snoozeBtn = document.createElement("button");
+              snoozeBtn.className = "btn btn-sm btn-outline-info ms-2";
+              snoozeBtn.innerHTML = "😴";
+              snoozeBtn.onclick = () => {
+                snoozeNotification(n.id, 5);
+                li.remove(); // Optionally remove from list
+              };
+
+              messageWrapper.appendChild(message);
+              markBtn.className = "btn btn-sm btn-outline-secondary ms-2";
+              messageWrapper.appendChild(markBtn);
+              messageWrapper.appendChild(snoozeBtn);
+  
+              li.appendChild(messageWrapper);
+              notifList.appendChild(li);
+  
+              if (!n.is_read) {
+                showToast(n.message);
+              }
+            });
+          } else {
+            notifCount.innerText = 0;
+            notifList.innerHTML = '<li><span class="dropdown-item-text text-muted">No notifications</span></li>';
+          }
+        });
+    }
+
+    function snoozeNotification(notificationId, minutes) {
+        fetch(`/schedules/snooze_notification/${notificationId}/?minutes=${minutes}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'snoozed') {
+                // Optionally remove the snoozed notification from the UI
+                document.getElementById(`notification-${notificationId}`)?.remove();
+            }
+        });
+    }
+
+  
+    document.addEventListener('DOMContentLoaded', function () {
+      loadNotifications(); // Fetch on load
+      setInterval(loadNotifications, 30000); // Repeat every 30s
+    });
+
+    document.getElementById("aiChatButton").addEventListener("click", function () {
+      const chatBox = document.getElementById("aiChatBox");
+      chatBox.style.display = chatBox.style.display === "none" ? "block" : "none";
+    });
+
+    document.getElementById("askAIButton").addEventListener("click", function () {
+      const question = document.getElementById("aiQuestion").value;
+      const responseDiv = document.getElementById("aiResponse");
+      responseDiv.innerHTML = "<em>Thinking...</em>";
+
+      fetch("/ask-ai/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({ question: question })
+      })
+        .then(res => res.json())
+        .then(data => {
+          const divider = document.createElement("hr");
+          responseDiv.appendChild(divider);
+
+          // ✅ Time Slot Suggestions
+          if (data.answer_type === "suggestion") {
+            const container = document.createElement("div");
+            container.classList.add("suggestion-block");
+
+            const title = document.createElement("h4");
+            title.textContent = data.title || "Available Time Slots:";
+            container.appendChild(title);
+
+            data.slots.forEach(slot => {
+              const slotEl = document.createElement("p");
+              slotEl.textContent = `🕒 ${slot.start} → ${slot.end}`;
+              container.appendChild(slotEl);
+            });
+
+            responseDiv.appendChild(container);
+
+          // ✅ Conflict Report
+          } else if (data.answer_type === "conflict_report") {
+            const container = document.createElement("div");
+            container.classList.add("suggestion-block");
+
+            const title = document.createElement("h4");
+            title.textContent = data.title || "Conflicting Events Found:";
+            container.appendChild(title);
+
+            data.conflicts.forEach(conflict => {
+              const block = document.createElement("div");
+              block.innerHTML = `
+                <p><strong>${conflict.date}</strong></p>
+                <ul>
+                  <li>${conflict.events[0]} (${conflict.times[0]})</li>
+                  <li>${conflict.events[1]} (${conflict.times[1]})</li>
+                </ul>
+              `;
+              container.appendChild(block);
+            });
+
+            responseDiv.appendChild(container);
+
+          // 💬 Fallback to plain text
+          } else if (data.answer) {
+            const textEl = document.createElement("p");
+            textEl.textContent = data.answer;
+            responseDiv.appendChild(textEl);
+          } else {
+            responseDiv.innerHTML = "Sorry, I couldn't understand that.";
+          }
+        })
+        .catch(() => {
+          responseDiv.innerHTML = "There was an error processing your request.";
+        });
+      });
+  </script>
+  
+  
+  
+  <!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 1060;"></div>
+
+</body>
+</html>
