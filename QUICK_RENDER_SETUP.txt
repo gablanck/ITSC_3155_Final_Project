@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════
+  RENDER DEPLOYMENT - QUICK SETUP GUIDE
+═══════════════════════════════════════════════════════════════
+
+✅ CODE PUSHED TO GITHUB!
+
+Now configure Render:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Go to Render Dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you already created a service:
+  → Go to your service settings
+  → Update the configuration below
+
+If starting fresh:
+  → Click "New +" → "Web Service"
+  → Connect your GitHub repo
+
+━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Configure Build Settings
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Root Directory:     (leave EMPTY or just "/")
+Build Command:      ./build.sh
+Start Command:      cd scheduling_app && gunicorn scheduling_app.wsgi:application
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Add Environment Variables
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Go to "Environment" tab and add:
+
+Key: DEBUG
+Value: False
+
+Key: SECRET_KEY
+Value: your-super-secret-random-key-change-this-123456789
+
+Key: ALLOWED_HOSTS
+Value: .onrender.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: Deploy
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+→ Click "Manual Deploy" → "Deploy latest commit"
+→ Wait 5-10 minutes
+→ Your app will be live at: https://your-app-name.onrender.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5: Create Admin User (After Deployment)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In Render dashboard:
+→ Go to your service
+→ Click "Shell" tab
+→ Run these commands:
+
+cd scheduling_app
+python manage.py createsuperuser
+
+Then access admin at: https://your-app-name.onrender.com/admin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If build fails:
+  ✓ Check build logs in Render dashboard
+  ✓ Make sure Root Directory is EMPTY or "/"
+  �� Verify build.sh command is: ./build.sh
+
+If app won't start:
+  ✓ Check runtime logs
+  ✓ Verify environment variables are set
+  ✓ Make sure start command includes "cd scheduling_app"
+
+═══════════════════════════════════════════════════════════════
