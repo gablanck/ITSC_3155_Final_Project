@@ -1,0 +1,5 @@
+Django>=5.1,<5.2
+openai>=2.9.0
+requests>=2.32.0
+gunicorn>=21.2.0
+whitenoise>=6.6.0

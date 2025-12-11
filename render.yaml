@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: scheduling-app
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "cd scheduling_app && gunicorn scheduling_app.wsgi:application"
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: PYTHON_VERSION
+        value: 3.11.0
